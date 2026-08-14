@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Seth — Account Growth System</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --stable:#21245C; --fresh:#00ADED; --energetic:#0045C2; --fireball:#F05A28;
+    --passionate:#E34554; --limitless:#FAB040;
+    --bg:#f4f5f8; --card:#ffffff; --text:#21245C; --ink:#3a3a44; --muted:#9a9aa5;
+    --line:#e7e7ec; --tint:#f7f8fb; --dontbg:#fdf3f4; --tailbg:#EDEDED; --tailtext:#21245C;
+    --shadow:0 12px 40px rgba(33,36,92,.08); --hl:rgba(250,176,64,.55);
+  }
+  html[data-theme="dark"]{
+    --bg:#0c0e1e; --card:#171a38; --text:#eef0fa; --ink:#c7cadf; --muted:#7f83a3;
+    --line:#262a52; --tint:#1e2148; --dontbg:#2b1722; --tailbg:#262a52; --tailtext:#eef0fa;
+    --shadow:0 12px 40px rgba(0,0,0,.45); --hl:rgba(250,176,64,.38);
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{font-family:'Poppins',Arial,sans-serif; color:var(--text); background:var(--bg); line-height:1.5; transition:background .2s;}
+
+  /* ---- top controls ---- */
+  .ctl{position:fixed; top:14px; z-index:60; width:42px; height:42px; border-radius:12px;
+       background:var(--card); border:1px solid var(--line); box-shadow:var(--shadow);
+       display:flex; align-items:center; justify-content:center; cursor:pointer; color:var(--text);}
+  #navBtn{left:14px;}
+  #themeBtn{right:14px;}
+  .ctl svg{width:20px; height:20px; stroke:currentColor; fill:none; stroke-width:2; stroke-linecap:round; stroke-linejoin:round;}
+  #iconMoon{display:none;}
+  html[data-theme="dark"] #iconSun{display:none;}
+  html[data-theme="dark"] #iconMoon{display:block;}
+
+  /* ---- side nav ---- */
+  .nav{position:fixed; top:0; left:0; bottom:0; width:236px; background:var(--card);
+       border-right:1px solid var(--line); padding:74px 14px 20px; z-index:50;
+       transform:translateX(0); transition:transform .2s;}
+  body:not(.nav-open) .nav{transform:translateX(-101%);}
+  .nav .who{padding:0 10px 16px;}
+  .nav .who .eyebrow{font-size:10px; font-weight:600; letter-spacing:2.5px; text-transform:uppercase; color:var(--fresh);}
+  .nav .who .name{font-size:17px; font-weight:600; margin-top:2px;}
+  .nav .who .sys{font-size:11px; font-weight:300; color:var(--muted);}
+  .nav a{display:flex; align-items:center; gap:10px; padding:11px 10px; border-radius:10px;
+         text-decoration:none; color:var(--ink); font-size:13.5px; font-weight:400;}
+  .nav a .dot{width:9px; height:9px; border-radius:3px; flex:none;}
+  .nav a.active{background:var(--tint); color:var(--text); font-weight:500;}
+  .nav a:hover{background:var(--tint);}
+  #backdrop{position:fixed; inset:0; background:rgba(10,12,30,.45); z-index:40; display:none;}
+
+  main{padding:74px 20px 60px; margin-left:236px; transition:margin .2s;}
+  body:not(.nav-open) main{margin-left:0;}
+  .wrap{max-width:840px; margin:0 auto;}
+  @media (max-width:900px){
+    main{margin-left:0;}
+    #backdrop.show{display:block;}
+    .nav{box-shadow:0 0 60px rgba(0,0,0,.25);}
+  }
+
+  .view{display:none;}
+  .view.on{display:block;}
+
+  .card{background:var(--card); border-radius:16px; box-shadow:var(--shadow); padding:36px 40px; margin-bottom:20px;}
+  @media (max-width:520px){ .card{padding:24px 18px;} }
+
+  /* ---- home ---- */
+  .idhead{margin:6px 0 22px;}
+  .idhead .eyebrow{font-size:11px; font-weight:600; letter-spacing:3px; color:var(--fresh); text-transform:uppercase;}
+  .idhead h1{font-size:24px; font-weight:600; margin-top:4px;}
+  .tiles{display:grid; grid-template-columns:1fr 1fr; gap:16px;}
+  @media (max-width:640px){ .tiles{grid-template-columns:1fr;} }
+  .tile{border-radius:18px; padding:26px 24px; min-height:190px; display:flex; flex-direction:column;
+        justify-content:flex-end; text-decoration:none; color:#fff;}
+  .tile .ctx{font-size:14px; font-weight:300; opacity:.85;}
+  .tile .big{font-size:25px; font-weight:600; line-height:1.15; margin-top:4px;}
+  .g-numbers{background:radial-gradient(130% 130% at 20% 0%, #3a3d6e 0%, #000000 100%); box-shadow:0 12px 30px rgba(0,0,0,.30);}
+  .g-buckets{background:radial-gradient(130% 130% at 20% 0%, var(--fresh) 0%, var(--stable) 80%); box-shadow:0 12px 30px rgba(33,36,92,.30);}
+  .g-rules{background:radial-gradient(130% 130% at 20% 0%, var(--fresh) 0%, var(--energetic) 85%); box-shadow:0 12px 30px rgba(0,69,194,.28);}
+  .g-week{background:linear-gradient(135deg, var(--fireball) 0%, var(--limitless) 100%); box-shadow:0 12px 30px rgba(240,90,40,.28);}
+  .g-dies{background:linear-gradient(135deg, var(--passionate) 0%, var(--fireball) 100%); box-shadow:0 12px 30px rgba(227,69,84,.28);}
+  .g-recap{background:radial-gradient(130% 130% at 20% 0%, #ffffff 0%, #d9dae3 100%); box-shadow:0 12px 30px rgba(33,36,92,.14);}
+  .g-recap .ctx{color:#21245C; opacity:.6;}
+  .g-recap .big{color:#21245C;}
+  .g-files{background:linear-gradient(135deg, #00ADED 0%, #0090d8 100%); box-shadow:0 12px 30px rgba(0,173,237,.30);}
+  .tile.g-files{grid-column:1/-1; min-height:130px;}
+
+  /* ---- section headers ---- */
+  .shead{border-radius:18px; padding:30px 28px; color:#fff; margin-bottom:20px;}
+  .shead .ctx{font-size:14px; font-weight:300; opacity:.85;}
+  .shead .big{font-size:26px; font-weight:600; line-height:1.15; margin-top:2px;}
+  .shead.g-recap .ctx, .shead.g-recap .big{color:#21245C;}
+
+  .glabel{font-size:11px; font-weight:600; letter-spacing:2.5px; text-transform:uppercase; color:var(--muted); margin-bottom:16px;}
+
+  /* ---- stats ---- */
+  .stats{display:grid; grid-template-columns:repeat(4,1fr); gap:12px;}
+  @media (max-width:640px){ .stats{grid-template-columns:repeat(2,1fr);} }
+  .stat{background:var(--tint); border:1px solid var(--line); border-radius:12px; padding:16px 14px;}
+  .stat .n{font-size:24px; font-weight:600; line-height:1.1;}
+  .stat .l{font-size:12px; font-weight:300; color:var(--ink); margin-top:6px; line-height:1.35;}
+  .statline{font-size:15px; font-weight:500; margin-top:18px;}
+  .hl{background:linear-gradient(180deg, transparent 55%, var(--hl) 55%); padding:0 2px;}
+
+  /* ---- buckets ---- */
+  .buckets{display:grid; grid-template-columns:1fr 1fr; gap:14px;}
+  @media (max-width:640px){ .buckets{grid-template-columns:1fr;} }
+  .bucket{border-radius:14px; padding:20px 20px 18px; color:#fff; min-height:150px;}
+  .bucket.grow{background:radial-gradient(120% 120% at 20% 0%, #2a63c9 0%, var(--stable) 70%); box-shadow:0 10px 26px rgba(33,36,92,.28);}
+  .bucket.keep{background:radial-gradient(120% 120% at 20% 0%, var(--fresh) 0%, var(--energetic) 75%); box-shadow:0 10px 26px rgba(0,69,194,.25);}
+  .bucket.seed{background:linear-gradient(135deg, var(--fireball) 0%, var(--limitless) 100%); box-shadow:0 10px 26px rgba(240,90,40,.25);}
+  .bucket.tail{background:var(--tailbg); color:var(--tailtext); box-shadow:none;}
+  .bucket .bname{font-size:19px; font-weight:600; display:flex; align-items:baseline; gap:8px;}
+  .bucket .bcount{font-size:12px; font-weight:400; opacity:.85;}
+  .bucket .brule{font-size:13px; font-weight:400; margin-top:8px; line-height:1.45; opacity:.95;}
+  .bucket .bnames{font-size:11.5px; font-weight:300; margin-top:10px; line-height:1.5; opacity:.85;}
+  .booknote{font-size:12px; color:var(--muted); font-weight:300; margin-top:14px;}
+  .booknote b{color:var(--text); font-weight:500;}
+
+  /* ---- rules ---- */
+  details.rule{border:1px solid var(--line); border-radius:14px; margin-bottom:14px; background:var(--card); overflow:hidden;}
+  details.rule summary{list-style:none; cursor:pointer; padding:18px 20px; display:flex; align-items:baseline; gap:12px;}
+  details.rule summary::-webkit-details-marker{display:none;}
+  .rulenum{font-size:14px; font-weight:600; color:var(--fireball); white-space:nowrap;}
+  .ruletitle{font-size:17px; font-weight:600; flex:1;}
+  .chev{margin-left:auto; color:var(--muted); transition:transform .15s; align-self:center;}
+  details[open] .chev{transform:rotate(90deg);}
+  .rulebody{padding:0 20px 20px;}
+  .why{font-size:14px; font-weight:400; color:var(--ink); margin-bottom:14px;}
+  ul.how{list-style:none;}
+  ul.how li{font-size:14px; color:var(--ink); padding:7px 0 7px 22px; position:relative; border-bottom:1px solid var(--line);}
+  ul.how li:last-child{border-bottom:none;}
+  ul.how li::before{content:""; position:absolute; left:2px; top:14px; width:8px; height:8px; border-radius:2px; background:var(--fresh);}
+  ul.how li b{color:var(--text); font-weight:600;}
+
+  .script{background:var(--tint); border-left:4px solid var(--fresh); border-radius:0 10px 10px 0; padding:14px 18px; margin-top:14px;}
+  .script .slabel{font-size:10.5px; font-weight:600; letter-spacing:2px; text-transform:uppercase; color:var(--fresh); margin-bottom:6px;}
+  .script p{font-size:14.5px; font-style:italic; color:var(--text); margin:6px 0;}
+  .script .blank{color:var(--fireball); font-style:italic;}
+
+  /* ---- week ---- */
+  .row{display:flex; align-items:flex-start; padding:10px 0; cursor:pointer; user-select:none; border-bottom:1px solid var(--line);}
+  .row:last-child{border-bottom:none;}
+  .box{width:22px; height:22px; border:2px solid var(--text); border-radius:6px; margin-right:14px; flex:none; margin-top:2px; position:relative;}
+  .box::after{content:"\2713"; position:absolute; inset:0; display:flex; align-items:center; justify-content:center; color:#fff; font-size:14px; font-weight:700; opacity:0;}
+  .row.done .box{background:var(--fresh); border-color:var(--fresh);}
+  .row.done .box::after{opacity:1;}
+  .row .h{font-size:15px; font-weight:500;}
+  .row .h em{font-style:normal; font-weight:300; color:var(--ink); font-size:13px;}
+  .row.done .h, .row.done .h em{text-decoration:line-through; color:var(--muted);}
+  .weekfoot{display:flex; justify-content:space-between; align-items:center; margin-top:12px;}
+  .weekfoot .n{font-size:12px; color:var(--muted); font-weight:300;}
+  #wreset{font-size:11px; color:var(--muted); background:none; border:none; cursor:pointer; text-decoration:underline; font-family:inherit;}
+  #wreset:hover{color:var(--fireball);}
+
+  /* ---- dies ---- */
+  .dont{background:var(--dontbg); border-left:4px solid var(--passionate); border-radius:0 10px 10px 0; padding:16px 18px;}
+  .dont ul{list-style:none;}
+  .dont ul li{font-size:14px; color:var(--ink); padding:7px 0 7px 22px; position:relative;}
+  .dont ul li::before{content:"\2715"; position:absolute; left:0; top:7px; color:var(--passionate); font-size:12px; font-weight:600;}
+  .dont ul li b{color:var(--text); font-weight:600;}
+
+  /* ---- recap ---- */
+  ol.recap{list-style:none; counter-reset:step;}
+  ol.recap li{counter-increment:step; font-size:14px; color:var(--ink); padding:9px 0 9px 34px; position:relative; border-bottom:1px solid var(--line);}
+  ol.recap li:last-child{border-bottom:none;}
+  ol.recap li::before{content:counter(step); position:absolute; left:0; top:9px; width:22px; height:22px; border-radius:50%; background:var(--stable); color:#fff; font-size:12px; font-weight:600; display:flex; align-items:center; justify-content:center;}
+  html[data-theme="dark"] ol.recap li::before{background:var(--fresh);}
+  .takeaway{margin-top:16px; font-size:15px; font-weight:500;}
+
+  .foot{max-width:840px; margin:28px auto 0; text-align:center; font-size:12px; font-weight:300; color:var(--muted);}
+  .foot a{color:var(--fresh); text-decoration:none;}
+
+  /* ---- files ---- */
+  .dl{display:flex; align-items:center; gap:16px; padding:18px 0; border-bottom:1px solid var(--line);}
+  .dl:last-child{border-bottom:none;}
+  .dlicon{width:46px; height:46px; flex:none; border-radius:12px; background:rgba(0,173,237,.12);
+          display:flex; align-items:center; justify-content:center; color:var(--fresh);}
+  .dlicon svg{width:22px; height:22px; stroke:currentColor; fill:none; stroke-width:2; stroke-linecap:round; stroke-linejoin:round;}
+  .dlname{font-size:15px; font-weight:500;}
+  .dldesc{font-size:12.5px; font-weight:300; color:var(--ink); margin-top:2px; line-height:1.4;}
+  .dlbtn{margin-left:auto; flex:none; background:var(--fresh); color:#fff; text-decoration:none;
+         font-size:13px; font-weight:600; padding:10px 22px; border-radius:999px;}
+  .dlbtn:hover{background:#0098cf;}
+  @media (max-width:560px){
+    .dl{flex-wrap:wrap;}
+    .dlbtn{margin-left:62px;}
+  }
+</style>
+</head>
+<body class="nav-open">
+
+<button class="ctl" id="navBtn" aria-label="Menu">
+  <svg viewBox="0 0 24 24"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg>
+</button>
+<button class="ctl" id="themeBtn" aria-label="Theme">
+  <svg id="iconSun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><line x1="12" y1="2" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="2" y1="12" x2="5" y2="12"/><line x1="19" y1="12" x2="22" y2="12"/><line x1="4.9" y1="4.9" x2="7" y2="7"/><line x1="17" y1="17" x2="19.1" y2="19.1"/><line x1="4.9" y1="19.1" x2="7" y2="17"/><line x1="17" y1="7" x2="19.1" y2="4.9"/></svg>
+  <svg id="iconMoon" viewBox="0 0 24 24"><path d="M20 13.5A8.5 8.5 0 1 1 10.5 4 6.8 6.8 0 0 0 20 13.5z"/></svg>
+</button>
+
+<div id="backdrop"></div>
+
+<aside class="nav" id="nav">
+  <div class="who">
+    <div class="eyebrow">Bulwark</div>
+    <div class="name">Seth</div>
+    <div class="sys">Account Growth System</div>
+  </div>
+  <a href="#home" data-v="home"><span class="dot" style="background:#8d90a8"></span>Home</a>
+  <a href="#numbers" data-v="numbers"><span class="dot" style="background:#4a4d7e"></span>Where the revenue is</a>
+  <a href="#buckets" data-v="buckets"><span class="dot" style="background:var(--stable)"></span>The four buckets</a>
+  <a href="#rules" data-v="rules"><span class="dot" style="background:var(--energetic)"></span>The three rules</a>
+  <a href="#week" data-v="week"><span class="dot" style="background:var(--fireball)"></span>The week</a>
+  <a href="#dies" data-v="dies"><span class="dot" style="background:var(--passionate)"></span>Where this dies</a>
+  <a href="#recap" data-v="recap"><span class="dot" style="background:#b9bac6"></span>Tying it all together</a>
+  <a href="#files" data-v="files"><span class="dot" style="background:var(--fresh)"></span>Files</a>
+</aside>
+
+<main>
+<div class="wrap">
+
+  <!-- HOME -->
+  <section class="view" id="v-home">
+    <div class="idhead">
+      <div class="eyebrow">Bulwark</div>
+      <h1>Seth — Account Growth System</h1>
+    </div>
+    <div class="tiles">
+      <a class="tile g-numbers" href="#numbers"><div class="ctx">The picture</div><div class="big">Where the revenue is</div></a>
+      <a class="tile g-buckets" href="#buckets"><div class="ctx">The system</div><div class="big">The four buckets</div></a>
+      <a class="tile g-rules" href="#rules"><div class="ctx">The plays</div><div class="big">The three rules</div></a>
+      <a class="tile g-week" href="#week"><div class="ctx">Every week</div><div class="big">The week</div></a>
+      <a class="tile g-dies" href="#dies"><div class="ctx">Guardrails</div><div class="big">Where this dies</div></a>
+      <a class="tile g-recap" href="#recap"><div class="ctx">Recap</div><div class="big">Tying it all together</div></a>
+      <a class="tile g-files" href="#files"><div class="ctx">Downloads</div><div class="big">Files</div></a>
+    </div>
+  </section>
+
+  <!-- NUMBERS -->
+  <section class="view" id="v-numbers">
+    <div class="shead g-numbers"><div class="ctx">Seth</div><div class="big">Where the revenue is</div></div>
+    <div class="card">
+      <div class="stats">
+        <div class="stat"><div class="n">$760K</div><div class="l">sold YTD through Aug 13</div></div>
+        <div class="stat"><div class="n">64%</div><div class="l">of it from PCC + CoorsTek + City of Portland</div></div>
+        <div class="stat"><div class="n">26</div><div class="l">accounts bought once this year, then nothing</div></div>
+        <div class="stat"><div class="n">119</div><div class="l">accounts on the list at $0 this year</div></div>
+      </div>
+      <div class="statline">The growth is inside companies already buying from you — <span class="hl">not in a new list.</span></div>
+    </div>
+  </section>
+
+  <!-- BUCKETS -->
+  <section class="view" id="v-buckets">
+    <div class="shead g-buckets"><div class="ctx">Seth</div><div class="big">The four buckets</div></div>
+    <div class="card">
+      <div class="buckets">
+        <div class="bucket grow">
+          <div class="bname">GROW <span class="bcount">8 families</span></div>
+          <div class="brule">Your proactive time lives here. Multi-thread every site, walk floors, stack quotes, ask for sister-site intros.</div>
+          <div class="bnames">PCC (11 sites) · CoorsTek · ATI Metals · Lamb Weston · International Paper · Columbia Forest · Roseburg · Panthalassa</div>
+        </div>
+        <div class="bucket keep">
+          <div class="bname">KEEP <span class="bcount">27 accounts</span></div>
+          <div class="brule">Respond fast. Quarterly check-in. One referral ask per touch. No project-hunting time.</div>
+          <div class="bnames">City of Portland · 7Robotics · Ferguson Valve · Oregon Tool · Selmet · Waste Management…</div>
+        </div>
+        <div class="bucket seed">
+          <div class="bname">SEED <span class="bcount">12 named targets</span></div>
+          <div class="brule">New logos, referral-first only. Capped — nobody gets added without dropping someone.</div>
+          <div class="bnames">Weyerhaeuser · LAM Research · Rockwell Collins · Timber Products · Boise Cascade · Stumptown…</div>
+        </div>
+        <div class="bucket tail">
+          <div class="bname">TAIL <span class="bcount">117 accounts</span></div>
+          <div class="brule">Mail merge only. You have permission to ignore them until they raise a hand.</div>
+        </div>
+      </div>
+      <div class="booknote">Full list, tiers, and next actions: <a href="files/Seth - Account Tiers.xlsx" download style="color:var(--fresh); text-decoration:none;"><b>Seth - Account Tiers.xlsx</b></a></div>
+    </div>
+  </section>
+
+  <!-- RULES -->
+  <section class="view" id="v-rules">
+    <div class="shead g-rules"><div class="ctx">Seth</div><div class="big">The three rules</div></div>
+
+    <details class="rule" open>
+      <summary><span class="rulenum">Rule 1</span><span class="ruletitle">Go from one name to four at every GROW site</span><span class="chev">›</span></summary>
+      <div class="rulebody">
+        <div class="why">Deer Creek has run 20 projects this year because people there know you. Almost every other site runs through a single mid-level contact — and SSBO stalled the day Jason left.</div>
+        <ul class="how">
+          <li>Every quote, install, or site visit ends with <b>one intro ask</b>. One per visit, every visit.</li>
+          <li>Target the seats that <b>fund and fix</b>: maintenance manager, facilities manager, plant manager, plant engineer. Your EHS contacts flag hazards — these people pay to fix them.</li>
+          <li>Walk the floor every time you're on site. Leave a <b>punch list</b>: what's urgent, what can wait, roughly what each costs.</li>
+        </ul>
+        <div class="script">
+          <div class="slabel">The intro ask</div>
+          <p>"Rod, quick one — do you ever work with <span class="blank">[name]</span> over in facilities?"</p>
+          <p>"Have you been happy with what we've done so far?"</p>
+          <p>"I don't suppose he ever mentions <span class="blank">[guys up on the roof / pinch points on the line]</span>?"</p>
+          <p>"Would you be open to introducing us? Even a walk-by next time I'm on site works."</p>
+        </div>
+      </div>
+    </details>
+
+    <details class="rule" open>
+      <summary><span class="rulenum">Rule 2</span><span class="ruletitle">Follow your champions to their other sites</span><span class="chev">›</span></summary>
+      <div class="rulebody">
+        <div class="why">CoorsTek has 37 locations and you sell to one. Lamb Weston's Tri-Cities cluster is an hour from your Boardman project. International Paper has an EHS manager sitting in Beaverton. The relationship travels so you don't have to.</div>
+        <ul class="how">
+          <li>Ask every champion the <b>sister-site question</b> — script below. One yes opens a plant you've never seen.</li>
+          <li>Start with managers <b>new in role</b> — they inherit the old hazards and have license to spend fixing them. Twelve are flagged on your CoorsTek map.</li>
+          <li>Use the contact maps — <b>CoorsTek is built</b>; Lamb Weston and IP names are loaded; PCC and ATI pulls are queued.</li>
+          <li>CoorsTek's biggest campuses are in Colorado. If life takes you there someday, <b>this account moves with you</b>.</li>
+        </ul>
+        <div class="script">
+          <div class="slabel">The sister-site ask</div>
+          <p>"Who's your counterpart at <span class="blank">[Golden / Richland / Beaverton]</span>?"</p>
+          <p>"If I mentioned your name and the <span class="blank">[rooftop]</span> project, would that be OK with you?"</p>
+          <p>"Anything I should know before I reach out?"</p>
+        </div>
+        <div class="script">
+          <div class="slabel">The new-in-role opener</div>
+          <p>"<span class="blank">[Name]</span> — congrats on the new role. I do safety projects at your <span class="blank">[Hillsboro]</span> plant — guarding, fall protection, forklift/pedestrian separation. New managers usually inherit a punch list. If you're building yours, I'll walk your floor and give you a straight read on what's worth fixing first."</p>
+        </div>
+      </div>
+    </details>
+
+    <details class="rule" open>
+      <summary><span class="rulenum">Rule 3</span><span class="ruletitle">Work the 12 seed targets warm — never cold</span><span class="chev">›</span></summary>
+      <div class="rulebody">
+        <div class="why">New logos are the slowest dollars in your book. The list is capped at 12 so it never eats the time that belongs to Rule 1 and Rule 2.</div>
+        <ul class="how">
+          <li>Every SEED touch leads with a <b>reference story</b>: PCC guarding for the metals plants, Columbia Forest's Boplan for the wood-products mills.</li>
+          <li>Ferguson Valve and Oregon Tool love you and sell into plants all over the state — they're <b>referral engines</b>, not revenue. Ask quarterly.</li>
+          <li>Ten of the twelve already know you — they were rated top-potential in January and went quiet. <b>Reactivate before you prospect.</b></li>
+        </ul>
+        <div class="script">
+          <div class="slabel">The referral-engine ask</div>
+          <p>"Who do you sell into that's fighting the same forklift-and-pedestrian mess <span class="blank">[PCC]</span> had?"</p>
+          <p>"Would you introduce me the way you'd want to be introduced?"</p>
+        </div>
+      </div>
+    </details>
+  </section>
+
+  <!-- WEEK -->
+  <section class="view" id="v-week">
+    <div class="shead g-week"><div class="ctx">Seth</div><div class="big">The week</div></div>
+    <div class="card">
+      <div class="glabel">Check them off — reset Friday</div>
+      <div id="week">
+        <div class="row" data-id="w1"><div class="box"></div><div class="h">3 new people met inside GROW accounts</div></div>
+        <div class="row" data-id="w2"><div class="box"></div><div class="h">1 sister-site or intro ask &nbsp;<em>— to a champion</em></div></div>
+        <div class="row" data-id="w3"><div class="box"></div><div class="h">1 floor walk &nbsp;<em>— punch list left behind</em></div></div>
+        <div class="row" data-id="w4"><div class="box"></div><div class="h">5 follow-ups on stalled quotes</div></div>
+        <div class="row" data-id="w5"><div class="box"></div><div class="h">2 SEED touches &nbsp;<em>— reference story or referral, never cold</em></div></div>
+        <div class="row" data-id="w6"><div class="box"></div><div class="h">Friday: 20 minutes &nbsp;<em>— count the week, load next week</em></div></div>
+      </div>
+      <div class="weekfoot">
+        <div class="n">Runs every week — including harvest season. Log the counts in your <a href="files/Cookbook_Seth.xlsx" download style="color:var(--fresh); text-decoration:none; font-weight:500;">Cookbook</a>.</div>
+        <button id="wreset">reset week</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- DIES -->
+  <section class="view" id="v-dies">
+    <div class="shead g-dies"><div class="ctx">Seth</div><div class="big">Where this dies</div></div>
+    <div class="card">
+      <div class="dont">
+        <ul>
+          <li><b>Disappearing into installs.</b> April–July was your best stretch ever; August went quiet because nothing was loaded behind it. The week runs anyway.</li>
+          <li><b>Single-threading.</b> One name per site is a risk, not a relationship. SSBO already proved it.</li>
+          <li><b>Chasing red tape.</b> City of Portland spends when Kevin calls. Serve it — don't hunt it.</li>
+          <li><b>Touching the tail.</b> 117 accounts get the newsletter and nothing else.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- FILES -->
+  <section class="view" id="v-files">
+    <div class="shead g-files"><div class="ctx">Seth</div><div class="big">Files</div></div>
+    <div class="card">
+      <div class="dl">
+        <div class="dlicon"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="12" y1="9" x2="12" y2="21"/></svg></div>
+        <div>
+          <div class="dlname">Seth - Account Tiers.xlsx</div>
+          <div class="dldesc">Every account in its bucket — the GROW plan, next actions, and the SEED list.</div>
+        </div>
+        <a class="dlbtn" href="files/Seth - Account Tiers.xlsx" download>Download</a>
+      </div>
+      <div class="dl">
+        <div class="dlicon"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7"/><path d="M17.5 14c2.1.8 3.5 2.7 3.5 6"/></svg></div>
+        <div>
+          <div class="dlname">Seth - Contact Maps.xlsx</div>
+          <div class="dldesc">Who to meet at each GROW account — CoorsTek's 58 names, Lamb Weston, International Paper, and the pulls still to run.</div>
+        </div>
+        <a class="dlbtn" href="files/Seth - Contact Maps.xlsx" download>Download</a>
+      </div>
+      <div class="dl">
+        <div class="dlicon"><svg viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="16" rx="2"/><line x1="4" y1="10" x2="20" y2="10"/><line x1="9" y1="3" x2="9" y2="7"/><line x1="15" y1="3" x2="15" y2="7"/><path d="M8.5 15.5l2 2 4-4"/></svg></div>
+        <div>
+          <div class="dlname">Cookbook_Seth.xlsx</div>
+          <div class="dldesc">The weekly behavior tracker — goals, To Go, and the dashboard. Log the week's counts here.</div>
+        </div>
+        <a class="dlbtn" href="files/Cookbook_Seth.xlsx" download>Download</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- RECAP -->
+  <section class="view" id="v-recap">
+    <div class="shead g-recap"><div class="ctx">Seth</div><div class="big">Tying it all together</div></div>
+    <div class="card">
+      <ol class="recap">
+        <li>Every account sits in a bucket. Time goes where the bucket says.</li>
+        <li>On every GROW visit: one intro ask, one floor walk, one punch list.</li>
+        <li>Once a quarter, ask each champion the sister-site question.</li>
+        <li>SEED stays warm and capped at 12. The tail stays on mail merge.</li>
+        <li>Friday, 20 minutes: count the week, load next week.</li>
+      </ol>
+      <div class="takeaway">If you remember nothing else: <span class="hl">the next dollar is at a site where someone already trusts you — ask that person for a name.</span></div>
+    </div>
+  </section>
+
+  <div class="foot">Dan Faber · Lushin · <a href="mailto:dan@lushin.com">dan@lushin.com</a></div>
+</div>
+</main>
+
+<script>
+  function sget(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } }
+  function sset(k,v){ try{ localStorage.setItem(k,v); }catch(e){} }
+
+  // ---- theme (default light) ----
+  var theme = sget('seth-theme') || 'light';
+  document.documentElement.setAttribute('data-theme', theme);
+  document.getElementById('themeBtn').addEventListener('click', function(){
+    theme = (theme === 'light') ? 'dark' : 'light';
+    document.documentElement.setAttribute('data-theme', theme);
+    sset('seth-theme', theme);
+  });
+
+  // ---- side nav ----
+  var isMobile = function(){ return window.innerWidth <= 900; };
+  var navPref = sget('seth-nav');
+  if(isMobile() || navPref === 'closed'){ document.body.classList.remove('nav-open'); }
+  document.getElementById('navBtn').addEventListener('click', function(){
+    var open = document.body.classList.toggle('nav-open');
+    if(!isMobile()) sset('seth-nav', open ? 'open' : 'closed');
+    document.getElementById('backdrop').classList.toggle('show', open && isMobile());
+  });
+  document.getElementById('backdrop').addEventListener('click', function(){
+    document.body.classList.remove('nav-open');
+    this.classList.remove('show');
+  });
+
+  // ---- hash router ----
+  var VIEWS = ['home','numbers','buckets','rules','week','dies','recap','files'];
+  function route(){
+    var v = (location.hash || '#home').slice(1);
+    if(VIEWS.indexOf(v) === -1) v = 'home';
+    VIEWS.forEach(function(id){
+      document.getElementById('v-'+id).classList.toggle('on', id === v);
+    });
+    document.querySelectorAll('.nav a').forEach(function(a){
+      a.classList.toggle('active', a.getAttribute('data-v') === v);
+    });
+    if(isMobile()){
+      document.body.classList.remove('nav-open');
+      document.getElementById('backdrop').classList.remove('show');
+    }
+    window.scrollTo(0,0);
+  }
+  window.addEventListener('hashchange', route);
+  route();
+
+  // ---- week checklist ----
+  var KEY='seth-growth-week';
+  var state = {};
+  try{ state = JSON.parse(sget(KEY)) || {}; }catch(e){ state = {}; }
+  document.querySelectorAll('#week .row').forEach(function(row){
+    var id = row.getAttribute('data-id');
+    if(state[id]) row.classList.add('done');
+    row.addEventListener('click', function(){
+      row.classList.toggle('done');
+      state[id] = row.classList.contains('done');
+      sset(KEY, JSON.stringify(state));
+    });
+  });
+  document.getElementById('wreset').addEventListener('click', function(){
+    state = {}; sset(KEY, JSON.stringify(state));
+    document.querySelectorAll('#week .row').forEach(function(r){ r.classList.remove('done'); });
+  });
+</script>
+</body>
+</html>
